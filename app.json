@@ -1,0 +1,5 @@
+{
+    "main": "app.js",
+    "output": "app.blob",
+    "disableExperimentalSEAWarning": true
+}
