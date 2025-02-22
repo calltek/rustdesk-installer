@@ -1,8 +1,8 @@
-import * as fs from 'fs'
-import { exec } from 'child_process'
-import * as dotenv from 'dotenv'
-import * as copypaste from 'copy-paste'
-import * as chalk from 'chalk'
+import dotenv from 'dotenv'
+import fs from 'fs'
+import child from 'child_process'
+import copypaste from 'copy-paste'
+import chalk from 'chalk'
 
 dotenv.config()
 
@@ -66,7 +66,7 @@ class RustdeskWindows {
         process.stdout.clearLine(1) // from cursor to end
     }
 
-    private async log(level: 'info' | 'error' | 'debug', message, error?: Error) {
+    private async log(level: 'info' | 'error' | 'debug', message: string, error?: any) {
         if (!this.verbose && level === 'debug') return
 
         if (this.verbose) {
@@ -98,7 +98,7 @@ class RustdeskWindows {
             this.run()
             this.print()
         } catch (error) {
-            this.log('error', error)
+            this.log('error', 'Unexpected error', error)
         }
     }
 
@@ -107,9 +107,7 @@ class RustdeskWindows {
         if (!base64) return
 
         const header = atob(base64)
-
-        const pack = require('../package.json')
-        const version = pack.version || '1.0.0'
+        const version = process.env.npm_package_version || '1.0.0'
 
         const content = `${header}\n\n========================================\n= RUSTDESK INSTALLER BY ${this.brandName.toUpperCase()}: ${version}\n========================================\n`
 
@@ -126,9 +124,7 @@ class RustdeskWindows {
         this.log('info', `ID: ${chalk.green(id)}`)
         this.log('info', `Password: ${chalk.yellow(password)}`)
 
-        copypaste.copy(clipboard, function () {
-            process.exit(0)
-        })
+        copypaste.copy(clipboard)
     }
 
     downloadRelease(): Promise<void> {
@@ -169,7 +165,7 @@ class RustdeskWindows {
                 // Get filename from url
                 const filename = this.binaryUrl.split('/').pop()
 
-                exec(
+                child.exec(
                     `${this.tmpPath}/${filename} --silent-install`,
                     (err: any, stdout: any, stderr: any) => {
                         if (err || stderr) throw err
@@ -194,7 +190,7 @@ class RustdeskWindows {
             cmd = `${this.binPath} --install-service`
         }
 
-        exec(cmd, (err: any, stdout: any, stderr: any) => {
+        child.exec(cmd, (err: any, stdout: any, stderr: any) => {
             if (err || stderr) throw err
         })
     }
@@ -204,7 +200,7 @@ class RustdeskWindows {
             try {
                 this.log('debug', 'Getting rustdesk id...')
 
-                exec(`${this.binPath} --get-id`, (err: any, stdout: string, stderr: any) => {
+                child.exec(`${this.binPath} --get-id`, (err: any, stdout: string, stderr: any) => {
                     if (err || stderr) throw err
 
                     this.id = parseInt(stdout)
@@ -221,7 +217,7 @@ class RustdeskWindows {
             try {
                 this.log('debug', 'Setting config: ' + this.config)
 
-                exec(
+                child.exec(
                     `${this.binPath} --config ${this.config}`,
                     (err: any, stdout: string, stderr: any) => {
                         if (err || stderr) throw err
@@ -253,7 +249,7 @@ class RustdeskWindows {
                     this.log('debug', 'Setting provided password: ' + this.password)
                 }
 
-                exec(
+                child.exec(
                     `${this.binPath} --password ${this.password}`,
                     (err: any, stdout: string, stderr: any) => {
                         if (err || stderr) throw err
